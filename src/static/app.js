@@ -25,6 +25,19 @@ document.addEventListener("DOMContentLoaded", () => {
           <p>${details.description}</p>
           <p><strong>Schedule:</strong> ${details.schedule}</p>
           <p><strong>Availability:</strong> ${spotsLeft} spots left</p>
+          <p><strong>Participants:</strong></p>
+          <ul class="participants-list">
+            ${
+              details.participants.length > 0
+                ? details.participants.map(participant => `
+                  <li>
+                    ${participant}
+                    <button class="delete-participant" onclick="unregisterParticipant('${participant}')">❌</button>
+                  </li>
+                `).join("")
+                : "<li>No participants yet</li>"
+            }
+          </ul>
         `;
 
         activitiesList.appendChild(activityCard);
@@ -39,6 +52,30 @@ document.addEventListener("DOMContentLoaded", () => {
       activitiesList.innerHTML = "<p>Failed to load activities. Please try again later.</p>";
       console.error("Error fetching activities:", error);
     }
+  }
+
+  // Function to dynamically update the participant list
+  function updateParticipantList(activityName, participants) {
+    const activityCards = document.querySelectorAll(".activity-card");
+
+    activityCards.forEach(card => {
+      if (card.querySelector("h4").textContent === activityName) {
+        const participantList = card.querySelector(".participants-list");
+        const spotsLeftElement = card.querySelector("p strong");
+
+        participantList.innerHTML = participants.length > 0
+          ? participants.map(participant => `
+              <li>
+                ${participant}
+                <button class="delete-participant" onclick="unregisterParticipant('${participant}')">❌</button>
+              </li>
+            `).join("")
+          : "<li>No participants yet</li>";
+
+        const spotsLeft = parseInt(spotsLeftElement.textContent.split(" ")[0]) - participants.length;
+        spotsLeftElement.textContent = `${spotsLeft} spots left`;
+      }
+    });
   }
 
   // Handle form submission
@@ -62,6 +99,7 @@ document.addEventListener("DOMContentLoaded", () => {
         messageDiv.textContent = result.message;
         messageDiv.className = "success";
         signupForm.reset();
+        updateParticipantList(activity, result.updatedParticipants);
       } else {
         messageDiv.textContent = result.detail || "An error occurred";
         messageDiv.className = "error";
@@ -80,6 +118,26 @@ document.addEventListener("DOMContentLoaded", () => {
       console.error("Error signing up:", error);
     }
   });
+
+  // Modify the unregisterParticipant function
+  function unregisterParticipant(participant) {
+    fetch(`/unregister`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ participant }),
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        alert(`${participant} has been unregistered.`);
+        updateParticipantList(data.activityName, data.updatedParticipants);
+      } else {
+        alert('Failed to unregister participant.');
+      }
+    });
+  }
 
   // Initialize app
   fetchActivities();
