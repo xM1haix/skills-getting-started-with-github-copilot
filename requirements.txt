@@ -1,2 +1,5 @@
-fastapi
+fastapi[testclient]
 uvicorn
+pytest
+pytest-asyncio
+httpx

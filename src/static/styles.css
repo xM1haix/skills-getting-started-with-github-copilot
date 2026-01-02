@@ -146,7 +146,7 @@ footer {
 .participants-list {
   margin-top: 10px;
   padding-left: 20px;
-  list-style-type: disc;
+  list-style-type: none; /* Changed from disc to none */
   color: #555;
 }
 
